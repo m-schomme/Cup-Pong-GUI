@@ -1,5 +1,5 @@
 <template>
-<div class="flex justify-content-center align-items-center h-full p-3">
+<div class="flex justify-content-center align-items-center h-screen p-3">
     <Card class="shadow-5 border-round-lg w-full max-w-40rem p-3">
         <template #header>
             <div class="flex justify-content-center">

@@ -2,6 +2,7 @@
   <div class="surface-100 min-h-screen">
     <NameEntry v-if="step === 'name'" @nameSubmitted="handleNameSubmitted" />
     <MonsterSelect v-if="step === 'monster'" :playerName="playerName" @monsterSelected="handleMonsterSelected" />
+    <GamePlay v-if="step === 'game'" :playerName="playerName" :monsterID="selectedMonster" />
   </div>
 </template>
 
@@ -9,6 +10,7 @@
 import { ref } from 'vue';
 import NameEntry from './components/NameEntry.vue';
 import MonsterSelect from './components/MonsterSelect.vue';
+import GamePlay from './components/GamePlay.vue';
 
 const step = ref('name');
 const playerName = ref('');
@@ -19,9 +21,8 @@ function handleNameSubmitted(name) {
   step.value = 'monster';
 }
 
-function handleMonsterSelected(monsterId) {
-  selectedMonster.value = monsterId;
-  console.log('Monster selected:', monsterId);
-  // You can now move to game logic or next step
+function handleMonsterSelected(monsterID) {
+  selectedMonster.value = monsterID;
+  step.value = 'game';
 }
 </script>

@@ -27,7 +27,7 @@
                 </Card>
             </div>
             <div v-if="selectedMonster" class="mt-5 text-center text-xl text-green-600 font-bold">
-                <Button label="Let's Play" />
+                <Button label="Let's Play" @click="emit('monsterSelected', selectedMonster)"/>
             </div>
         </template>
       </Card>
@@ -67,7 +67,7 @@
     function selectMonster(id) {
         selectedMonster.value = id;
     }
-    // Your 8 monsters:
+   
     const monsters = [
     { id: 1, name: 'Bob', src: '/src/assets/monsters/monster1.png' },
     { id: 2, name: 'Sam', src: '/src/assets/monsters/monster2.png' },
