@@ -19,10 +19,17 @@
                     :class="selectedMonster === monster.id ? 'border-primary border-3 shadow-10 scale-120' : ''"
                 >
                     <template #title>
-                        <img :src="monster.src" :alt="monster.name" class=" justify-content-center w-10rem h-10rem border-round-lg mb-3 block" />
+                        <!-- <img :src="monster.src" :alt="monster.name" class=" justify-content-center w-10rem h-10rem border-round-lg mb-3 block" /> -->
+                         <div class="flex justify-center items-center w-full h-60">
+                            <img 
+                              :src="monster.src" 
+                              :alt="monster.name" 
+                              class="object-contain max-h-full max-w-full border-round-lg" 
+                            />
+                          </div>
                     </template>
                     <template #footer>
-                        <div class="text-center font-semibold text-lg block">{{ monster.name }}</div>
+                        <div class="text-center font-semibold text-lg block" >{{ monster.name }}</div>
                     </template>
                 </Card>
             </div>
