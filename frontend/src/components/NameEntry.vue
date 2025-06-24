@@ -1,6 +1,6 @@
 <template>
-<div class="flex justify-content-center align-items-center h-screen p-3">
-    <Card class="shadow-5 border-round-lg w-full max-w-40rem p-3">
+<div class="justify-content-center align-items-center p-3" >
+    <Card class="shadow-5 border-round-lg  p-3">
         <template #header>
             <div class="flex justify-content-center">
                 <img 
