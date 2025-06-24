@@ -1,26 +1,29 @@
 <template>
-  <div class="flex justify-content-center align-items-center h-screen p-3">
-    <Card class="shadow-5 border-round-lg w-full  p-3">
+  <div class="gameplay-container">
+    <Card class="gameplay-card">
       <template #title>
-        <div class="text-center text-3xl font-bold text-teal-500">
-          Game Play
+        <div class="gameplay-title">
+          GAME PLAY
         </div>
       </template>
 
       <template #content>
-         <div class="flex flex-row ">
-          <div class="flex flex-col justify-center items-center p-4 border-r-2">
-            <div class="col items-center" style="width:30%;">
-              <h2 class="text-2xl font-semibold mt-2">Turn:</h2>
-              <img :src="monsterImage" :alt="playerName" class="max-w-full h-auto rounded-lg shadow-lg" style="max-height: 300px;" />
-              <h2 class="text-2xl font-semibold mt-2">{{ playerName }}</h2>
-            </div>
+        <div class="gameplay-content">
+          <div class="player-info">
+            <h2 class="turn-label">TURN:</h2>
+            <img :src="monsterImage" :alt="playerName + ' monster avatar'" class="monster-avatar" />
+            <h2 class="player-name">{{ playerName }}</h2>
+            <Button @click="shoot" class="p-button-secondary">
+              Shoot
+            </Button>
           </div>
           <Divider layout="vertical" />
-          <div class="flex justify-center items-center p-4" style="width:500px; height: 500px;">
-            <div ref="gameCanvas" class="w-full h-full "></div>
+          <div class="canvas-container">
+            <div ref="gameCanvas" class="game-canvas"></div>
           </div>
-
+        </div>
+        <div class="actions">
+          <Button label="Restart" icon="pi pi-refresh" @click="restartGame" class="p-button-secondary" />
         </div>
       </template>
     </Card>
@@ -30,12 +33,21 @@
 <script>
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import api from '../api';
 
 export default {
   name: 'GamePlay',
   props: {
     playerName: { type: String, default: 'Player 1' },
     monsterID: { type: Number, required: true }
+  },
+  data() {
+    return {
+      cupState: [],
+      cupMeshesPlayer: [],
+      cupMeshesRobot: [],
+
+    }
   },
   computed: {
     monsterImage() {
@@ -44,39 +56,105 @@ export default {
   },
   mounted() {
     this.initThree();
+    window.addEventListener('resize', this.handleResize);
+    this.startGame();
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize);
+    if (this.renderer) {
+      this.renderer.dispose();
+    }
   },
   methods: {
+    async startGame() {
+      try {
+        const response = await api.post('/start-game');
+        console.log(response.data);
+        this.cupState = response.data.state;
+        this.updateCups();
+      } catch (error) {
+        console.error("Error starting game:", error);
+      }
+    },
+
+    async shoot() {
+      try {
+        const response = await api.post('/shoot');
+        console.log(response.data);
+        this.cupState = response.data.state;
+
+        if (response.data.hit !==null) {
+          const targetCup = this.cupMeshesPlayer[response.data.hit];
+          const targetX = targetCup.position.x;
+          const targetZ = targetCup.position.z;
+          this.animateShot(targetX, targetZ);
+
+
+          setTimeout(() => {
+            this.updateCups();
+          }, 750);
+        } else{
+          this.updateCups();
+        }
+      } catch (error) {
+        console.error("Error shooting:", error);
+      }
+    },
     initThree() {
       const width = this.$refs.gameCanvas.clientWidth;
       const height = this.$refs.gameCanvas.clientHeight;
 
-      const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xf5f5f5);
+      this.scene = new THREE.Scene();
+      this.scene.background = new THREE.Color(0xf5f5f5);
 
-      const camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 100);
-      camera.position.set(20, 10, 15);
+      this.camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 100);
+      this.camera.position.set(0, 10, 15);
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(width, height);
-      this.$refs.gameCanvas.appendChild(renderer.domElement);
+      this.renderer = new THREE.WebGLRenderer({ antialias: true });
+      this.renderer.setSize(width, height);
+      this.$refs.gameCanvas.appendChild(this.renderer.domElement);
 
-      const controls = new OrbitControls(camera, renderer.domElement);
-      camera.position.set(0, 10, 15);
-      controls.update();
+      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+      this.controls.update();
 
       // Lighting
       const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-      scene.add(ambientLight);
+      this.scene.add(ambientLight);
       const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
       directionalLight.position.set(10, 10, 10);
-      scene.add(directionalLight);
+      this.scene.add(directionalLight);
 
       // Table
       const tableGeometry = new THREE.BoxGeometry(10, 0.5, 20);
       const tableMaterial = new THREE.MeshPhongMaterial({ color: 0xf5f5f5 });
       const table = new THREE.Mesh(tableGeometry, tableMaterial);
       table.position.y = -0.25;
-      scene.add(table);
+      this.scene.add(table);
+
+      // Center line
+      const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const centerLine = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 0.01, 20),
+        lineMaterial
+      );
+      centerLine.position.y = 0.135;
+      centerLine.position.x = 0;
+      centerLine.position.z = 0;
+      this.scene.add(centerLine);
+
+      // Side lines
+      const sideLineLeft = new THREE.Mesh(
+        new THREE.BoxGeometry(10, 0.01, 0.05),
+        lineMaterial
+      );
+      sideLineLeft.position.y = 0.135;
+      sideLineLeft.position.x = 0;
+      sideLineLeft.position.z = -10;
+      this.scene.add(sideLineLeft);
+
+      const sideLineRight = sideLineLeft.clone();
+      sideLineRight.position.z = 10;
+      this.scene.add(sideLineRight);
 
       // Cups using LatheGeometry
       const points = [
@@ -100,7 +178,16 @@ export default {
           cup.position.x = (i - (cupsInRow - 1) / 2) * 2;
           cup.position.y = 0.14;
           cup.position.z = -8 + row * 2;
-          scene.add(cup);
+          this.scene.add(cup);
+          this.cupMeshesPlayer.push(cup);
+
+          // Add bottom disk
+          const bottomGeometry = new THREE.CircleGeometry(0.45, 32);
+          const bottomMaterial = cupMaterial.clone();
+          const bottom = new THREE.Mesh(bottomGeometry, bottomMaterial);
+          bottom.rotation.x = -Math.PI / 2;
+          bottom.position.set(cup.position.x, cup.position.y, cup.position.z);
+          this.scene.add(bottom);
         }
       }
 
@@ -111,29 +198,180 @@ export default {
           cup.position.x = (i - row / 2) * 2;
           cup.position.y = 0.14;
           cup.position.z = 5 + row * 2;
-          scene.add(cup);
+          this.scene.add(cup);
+
+          // Add bottom disk
+          const bottomGeometry = new THREE.CircleGeometry(0.45, 32);
+          const bottomMaterial = cup2Material.clone();
+          const bottom = new THREE.Mesh(bottomGeometry, bottomMaterial);
+          bottom.rotation.x = -Math.PI / 2;
+          bottom.position.set(cup.position.x, cup.position.y, cup.position.z);
+          this.scene.add(bottom);
+          this.cupMeshesRobot.push(cup);
         }
       }
 
       // Ball
       const ballGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const ballMaterial = new THREE.MeshPhongMaterial({ color: 0xFAF9F6 });
-      const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-      ball.position.set(0, 0.3, 0);
-      scene.add(ball);
+      this.ball = new THREE.Mesh(ballGeometry, ballMaterial);
+      this.ball.position.set(0, 0, 11);
+      this.scene.add(this.ball);
 
-      window.addEventListener('resize', () => {
-        camera.aspect = this.$refs.gameCanvas.clientWidth / this.$refs.gameCanvas.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(this.$refs.gameCanvas.clientWidth, this.$refs.gameCanvas.clientHeight);
-      });
 
-      function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
+      this.animate();
+    },
+    animate() {
+      this.renderer.render(this.scene, this.camera);
+      requestAnimationFrame(this.animate);
+    },
+    animateShot(targetX, targetZ) {
+      const startX = 0;
+      const startY = 0.3;
+      const startZ = 0;
+
+      const endX = targetX;
+      const endY = 0.14; // Cup height
+      const endZ = targetZ;
+
+      const duration = 500; // ms
+      const startTime = performance.now();
+
+      const animateFrame = (now) => {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1); // Normalize 0 → 1
+
+        // Simple parabolic arc (you can tweak this for realism)
+        this.ball.position.x = startX + (endX - startX) * t;
+        this.ball.position.z = startZ + (endZ - startZ) * t;
+        this.ball.position.y = startY + 8 * t * (1 - t); // increased arc peak
+
+        if (t < 1) {
+          requestAnimationFrame(animateFrame);
+        } else {
+          this.ball.position.set(endX, endY, endZ);
+          setTimeout(() => {
+            this.resetBall();
+          }, 100);
+        }
+      };
+
+      requestAnimationFrame(animateFrame);
+    },
+    resetBall() {
+      this.ball.position.set(0, 0, 11);
+    },
+    handleResize() {
+      if (!this.$refs.gameCanvas) return;
+      const width = this.$refs.gameCanvas.clientWidth;
+      const height = this.$refs.gameCanvas.clientHeight;
+      this.camera.aspect = width / height;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(width, height);
+    },
+    updateCups() {
+      for (let i = 0; i < this.cupMeshesPlayer.length; i++) {
+        if (this.cupState[i] === false) {
+          this.cupMeshesPlayer[i].visible = false;  
+        } else {
+          this.cupMeshesPlayer[i].visible = true;   
+        }
       }
-      animate();
+    },
+    restartGame() {
+      window.location.reload();
     }
   }
 };
 </script>
+
+<style scoped>
+.gameplay-container {
+  min-height: 85vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 1rem;
+}
+.gameplay-card {
+  width: 100%;
+  max-width: 1100px;
+  min-height: 600px;
+  padding: 2rem;
+  border-radius: 1rem;
+  margin: 0;
+  padding-top:0;
+  padding-bottom:0;
+}
+.gameplay-title {
+  text-align: center;
+  font-family: 'Archivo Narrow', sans-serif;
+  color: #20B2AA;
+  font-size: clamp(1.5rem, 5vw, 4.5rem);
+  margin:0;
+  padding: 0;
+}
+.gameplay-content {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: stretch;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 220px;
+  max-width: 400px;
+  flex: 1 1 220px;
+  padding:0;
+  margin:0;
+
+}
+.turn-label {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #0d9488;
+}
+.monster-avatar {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  margin: 1rem 0;
+  padding: 1rem;
+}
+.player-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #334155;
+  padding:0;
+  margin:0;
+}
+.canvas-container {
+  flex: 2 1 400px;
+  min-width: 320px;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.game-canvas {
+  width: 100%;
+  height: 38vw;
+  max-width: 500px;
+  max-height: 450px;
+  min-height: 320px;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+</style>
