@@ -30,6 +30,7 @@
                               :src="monster.src" 
                               :alt="monster.name" 
                               class="monster-image"
+                              loading="lazy"
                             />
                           </div>
                     </template>

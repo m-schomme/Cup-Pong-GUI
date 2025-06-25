@@ -3,23 +3,23 @@
     <Card class="gameplay-card">
       <template #title>
         <div class="gameplay-title">
-          GAME PLAY
+          {{ winner ? 'WINNER' : 'GAME PLAY' }}
         </div>
       </template>
 
       <template #content>
-        <div class="gameplay-content">
+        <div v-if="!winner" class="gameplay-content">
           <div class="player-info">
             <h2 class="turn-label">TURN:</h2>
             <div v-if="currentTurn==='player'">
-              <img :src="monsterImage" :alt="playerName + ' monster avatar'" class="monster-avatar" />
+              <img :src="monsterImage" loading="lazy" :alt="playerName + ' monster avatar'" class="monster-avatar" />
               <h2 class="player-name">{{ playerName }}</h2>
               <Button @click="shoot" class="p-button-secondary">
                 Shoot
               </Button>
             </div>
             <div v-if ="currentTurn==='robot'">
-              <img src="/src/assets/monsters/robot.png" alt="Robot monster avatar" class="monster-avatar" />
+              <img src="/src/assets/monsters/robot.png" loading="lazy" alt="Robot monster avatar" class="monster-avatar" />
               <h2 class="player-name">Robot</h2>
               <div class="monster-btn-placeholder"></div>
             </div>
@@ -29,8 +29,31 @@
             <div ref="gameCanvas" class="game-canvas"></div>
           </div>
         </div>
+        <div v-else class="text-center">
+          <div v-if="winner === 'player'">
+            <img
+              :src="monsterImage"
+              loading="lazy"
+              :alt="playerName + ' monster avatar'"
+              class="monster-avatar winner-avatar"
+            />
+            <h3 class="winner-name">{{ playerName }}</h3>
+            <p>Congratulations!</p>
+          </div>
+
+          <div v-else-if="winner === 'robot'">
+            <img
+              src="/src/assets/monsters/robot.png" 
+              loading="lazy"
+              alt="Robot avatar"
+              class="monster-avatar"
+            />
+            <h3 class="winner-name">Robot</h3>
+            <p>Ha ha you lost.</p>
+          </div>
+        </div>
         <div class="actions">
-          <Button label="Restart" icon="pi pi-refresh" @click="restartGame" class="p-button-secondary" />
+          <Button  icon="pi pi-refresh" @click="restartGame" class="p-button-secondary" />
         </div>
       </template>
     </Card>
@@ -55,6 +78,7 @@ export default {
       cupMeshesRobot: [],
       currentTurn: 'player',
       playerShots: 2,
+      winner:null,
 
     }
   },
@@ -138,7 +162,11 @@ export default {
 
           await new Promise(resolve => setTimeout(resolve, 400));
           await this.animateRobotShot(targetX, targetZ);
-          await new Promise(resolve => setTimeout(resolve, 600));  // small pause between robot shots
+
+          // Hide the cup immediately after the shot
+          this.cupMeshesRobot[hitIndex].visible = false;
+          // Optionally update cupState if needed
+          // this.cupState[hitIndex + this.cupMeshesPlayer.length] = false;
         }
 
         // Update full state after robot finishes
@@ -157,7 +185,7 @@ export default {
       return new Promise((resolve) => {
         const startX = 0;
         const startY = 0.3;
-        const startZ = 0;
+        const startZ = -10;
 
         const endX = targetX;
         const endY = 0.14;
@@ -375,9 +403,19 @@ export default {
           this.cupMeshesRobot[i].visible = true;
         }
       }
+
+      this.gameOver();
     },
     restartGame() {
       window.location.reload();
+      this.winner = null;
+    },
+    gameOver() {
+      if (this.cupMeshesPlayer.every(cup => !cup.visible)) {
+        this.winner = 'player';
+      } else if (this.cupMeshesRobot.every(cup => !cup.visible)) {
+        this.winner = 'robot';
+      }
     }
   }
 };
@@ -451,6 +489,13 @@ export default {
   font-size: 1.5rem;
   font-weight: 600;
   color: #334155;
+  padding:0;
+  margin:0;
+}
+.winner-name {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #24921f;
   padding:0;
   margin:0;
 }
