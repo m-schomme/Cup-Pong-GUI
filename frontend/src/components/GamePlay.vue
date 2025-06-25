@@ -11,11 +11,18 @@
         <div class="gameplay-content">
           <div class="player-info">
             <h2 class="turn-label">TURN:</h2>
-            <img :src="monsterImage" :alt="playerName + ' monster avatar'" class="monster-avatar" />
-            <h2 class="player-name">{{ playerName }}</h2>
-            <Button @click="shoot" class="p-button-secondary">
-              Shoot
-            </Button>
+            <div v-if="currentTurn==='player'">
+              <img :src="monsterImage" :alt="playerName + ' monster avatar'" class="monster-avatar" />
+              <h2 class="player-name">{{ playerName }}</h2>
+              <Button @click="shoot" class="p-button-secondary">
+                Shoot
+              </Button>
+            </div>
+            <div v-if ="currentTurn==='robot'">
+              <img src="/src/assets/monsters/robot.png" alt="Robot monster avatar" class="monster-avatar" />
+              <h2 class="player-name">Robot</h2>
+              <div class="monster-btn-placeholder"></div>
+            </div>
           </div>
           <Divider layout="vertical" />
           <div class="canvas-container">
@@ -46,6 +53,8 @@ export default {
       cupState: [],
       cupMeshesPlayer: [],
       cupMeshesRobot: [],
+      currentTurn: 'player',
+      playerShots: 2,
 
     }
   },
@@ -90,16 +99,97 @@ export default {
           this.animateShot(targetX, targetZ);
 
 
-          setTimeout(() => {
-            this.updateCups();
-          }, 750);
+        setTimeout(() => {
+          this.updateCups();
+        }, 750);
+
+        setTimeout(() => {
+          this.playerShots -=1;
+          if (this.playerShots >0){
+          } else {
+            this.currentTurn = 'robot';
+            this.robotTurn();
+          }
+        }, 1700);
+
         } else{
           this.updateCups();
+          setTimeout(() => {
+            this.currentTurn = 'robot';
+            this.robotTurn();
+          }, 1000);
         }
       } catch (error) {
         console.error("Error shooting:", error);
       }
     },
+    async robotTurn() {
+      try {
+        const response = await api.post('/robot-turn');
+        console.log(response.data);
+        const hits = response.data.hits;
+
+        // Animate each robot shot sequentially
+        for (let i = 0; i < hits.length; i++) {
+          const hitIndex = hits[i];
+          const targetCup = this.cupMeshesRobot[hitIndex];
+          const targetX = targetCup.position.x;
+          const targetZ = targetCup.position.z;
+
+          await new Promise(resolve => setTimeout(resolve, 400));
+          await this.animateRobotShot(targetX, targetZ);
+          await new Promise(resolve => setTimeout(resolve, 600));  // small pause between robot shots
+        }
+
+        // Update full state after robot finishes
+        this.cupState = response.data.state;
+        this.updateCups();
+
+        setTimeout(() => {
+          this.playerShots = 2;  // Reset player shots for next round
+          this.currentTurn = 'player';
+        }, 700);
+      } catch (error) {
+        console.error("Error in robot turn:", error);
+      }
+    },
+    animateRobotShot(targetX, targetZ) {
+      return new Promise((resolve) => {
+        const startX = 0;
+        const startY = 0.3;
+        const startZ = 0;
+
+        const endX = targetX;
+        const endY = 0.14;
+        const endZ = targetZ;
+
+        const duration = 600; // ms
+        const startTime = performance.now();
+
+        const animateFrame = (now) => {
+          const elapsed = now - startTime;
+          const t = Math.min(elapsed / duration, 1);
+
+          // Simple parabolic arc
+          this.ball.position.x = startX + (endX - startX) * t;
+          this.ball.position.z = startZ + (endZ - startZ) * t;
+          this.ball.position.y = startY + 12 * t * (1 - t);
+
+          if (t < 1) {
+            requestAnimationFrame(animateFrame);
+          } else {
+            this.ball.position.set(endX, endY, endZ);
+            setTimeout(() => {
+              this.resetBall();
+              resolve();  // Resolve after ball resets
+            }, 400);
+          }
+        };
+
+      requestAnimationFrame(animateFrame);
+      });
+    },
+
     initThree() {
       const width = this.$refs.gameCanvas.clientWidth;
       const height = this.$refs.gameCanvas.clientHeight;
@@ -244,7 +334,7 @@ export default {
         // Simple parabolic arc (you can tweak this for realism)
         this.ball.position.x = startX + (endX - startX) * t;
         this.ball.position.z = startZ + (endZ - startZ) * t;
-        this.ball.position.y = startY + 8 * t * (1 - t); // increased arc peak
+        this.ball.position.y = startY + 12 * t * (1 - t); // increased arc peak
 
         if (t < 1) {
           requestAnimationFrame(animateFrame);
@@ -275,6 +365,14 @@ export default {
           this.cupMeshesPlayer[i].visible = false;  
         } else {
           this.cupMeshesPlayer[i].visible = true;   
+        }
+      }
+
+      for (let i = 0; i < this.cupMeshesRobot.length; i++) {
+        if (this.cupState[i + this.cupMeshesPlayer.length] === false) {
+          this.cupMeshesRobot[i].visible = false;
+        } else {
+          this.cupMeshesRobot[i].visible = true;
         }
       }
     },
@@ -326,6 +424,7 @@ export default {
   align-items: center;
   min-width: 220px;
   max-width: 400px;
+  min-height: 420px;
   flex: 1 1 220px;
   padding:0;
   margin:0;
@@ -337,8 +436,12 @@ export default {
   color: #0d9488;
 }
 .monster-avatar {
-  max-width: 100%;
-  max-height: 300px;
+  width: 250px;
+  height: 300px;
+  object-fit: contain;
+  display: block;
+  /* max-width: 100%; */
+  /* max-height: 300px; */
   border-radius: 1rem;
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
   margin: 1rem 0;
@@ -373,5 +476,13 @@ export default {
   display: flex;
   justify-content: flex-end;
   margin-top: 1.5rem;
+}
+.monster-btn-placeholder {
+  width: 120px;
+  height: 25px;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

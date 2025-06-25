@@ -27,10 +27,19 @@ def start_game():
 
 @app.post("/shoot")
 def shoot():
-    result = sim.simulate_shot()
+    result = sim.simulate_player_shot()
     if result is None:
         return {"message": "Game over!", "state": sim.get_game_state()}
     return {"hit": result, "state": sim.get_game_state()}
+
+@app.post("/robot-turn")
+def robot_turn():
+    hits = []
+    for _ in range(2):
+        result = sim.simulate_robot_shot()
+        if result is not None:
+            hits.append(result)
+    return {"hits": hits, "state": sim.get_game_state()}
 
 
     
