@@ -1,7 +1,7 @@
 <template>
   <div class="surface-100 min-h-screen p-0">
     <div class="flex justify-content-center" >
-      <Card class="shadow-5 border-round-lg w-full max-w-4xl mt-1 p-2 "style="max-height: 94vh;">
+      <Card class="shadow-5 border-round-lg w-full max-w-4xl mt-1 p-2 "style="max-height: 86.5vh;">
         <template #title>
           <div 
             class="monster-title-container" :class="{ 'monster-title--shrunk': selectedMonster }">
@@ -21,7 +21,7 @@
                       ? 'border-primary border-2 shadow-10 scale-120' 
                       : (selectedMonster ? 'monster-card--shrunk' : '')
                     ]"
-                    style="width: 15rem; height: 17rem;"
+                    style="width: 14em; height: 16.5em;"
                 >
                     <template #content>
                         <!-- <img :src="monster.src" :alt="monster.name" class=" justify-content-center w-10rem h-10rem border-round-lg mb-3 block" /> -->
@@ -40,7 +40,7 @@
                 </Card>
             </div>
             <div v-if="selectedMonster" class=" text-center text-sm text-green-600 font-bold p-0" style="margin-bottom:0px !important; padding-bottom:0 !important;" >
-                <Button label="Let's Play" @click="emit('monsterSelected', selectedMonster)" class="monster-btn"/>
+                <Button label="Let's Play" @click="emit('monsterSelected', selectedMonster)" class="monster-btn" />
             </div>
         </template>
       </Card>
@@ -77,7 +77,7 @@
     }
     .monster-title-container {
       margin: 0 !important;
-      padding: 0.25rem 0 !important; /* adjust as needed */
+      padding: 0.22em 0 !important; /* adjust as needed */
       text-align: center;
       padding: 0 !important;
       font-family: 'Archivo Narrow', sans-serif;
@@ -95,7 +95,7 @@
     .monster-title {
       font-family: 'Archivo Narrow', sans-serif;
       color: #20B2AA;
-      font-size: clamp(2rem, 6vw, 5rem);
+      font-size: clamp(1.75rem, 5.5vw, 4.5rem);
     }
     .monster-card {
       width: 100%;
@@ -141,8 +141,8 @@
       transition: transform 0.3s;
     }
     .monster-btn {
-      padding: 0.10rem 1rem !important; /* smaller padding */
-      font-size: 1.3rem !important;       /* smaller font */
+      padding: 0.10rem 0.5rem !important; /* smaller padding */
+      font-size: 1rem !important;       /* smaller font */
       min-width: unset !important;
       min-height: unset !important;
       margin-top: 0.5rem !important;
@@ -156,9 +156,14 @@
     import { ref } from 'vue';
     import Card from 'primevue/card';
     import Button from 'primevue/button';
+    import { onMounted } from 'vue';
 
     const props = defineProps({
     playerName: String
+    });
+
+    onMounted(() => {
+      window.scrollTo(0, 0);
     });
 
     const emit = defineEmits(['monsterSelected']);
@@ -172,11 +177,11 @@
     { id: 1, name: 'Bob', src: '/src/assets/monsters/monster1.png' },
     { id: 2, name: 'Sam', src: '/src/assets/monsters/monster2.png' },
     { id: 3, name: 'Pookie', src: '/src/assets/monsters/monster3.png' },
-    { id: 4, name: 'Monster 4', src: '/src/assets/monsters/monster4.png' },
-    { id: 5, name: 'Monster 5', src: '/src/assets/monsters/monster5.png' },
-    { id: 6, name: 'Monster 6', src: '/src/assets/monsters/monster6.png' },
-    { id: 7, name: 'Monster 7', src: '/src/assets/monsters/monster7.png' },
-    { id: 8, name: 'Monster 8', src: '/src/assets/monsters/monster8.png' },
+    { id: 4, name: 'Nutter', src: '/src/assets/monsters/monster4.png' },
+    { id: 5, name: 'Johnston', src: '/src/assets/monsters/monster5.png' },
+    { id: 6, name: 'M1k3', src: '/src/assets/monsters/monster6.png' },
+    { id: 7, name: 'Schubert', src: '/src/assets/monsters/monster7.png' },
+    { id: 8, name: 'Tarter', src: '/src/assets/monsters/monster8.png' },
     ];
 
 </script>

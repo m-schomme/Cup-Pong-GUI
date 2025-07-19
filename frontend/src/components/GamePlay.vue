@@ -1,6 +1,6 @@
 <template>
   <div class="gameplay-container">
-    <Card class="gameplay-card">
+    <Card class="gameplay-card" style="max-height: 86vh;">
       <template #title>
         <div class="gameplay-title">
           {{ winner ? 'WINNER' : 'GAME PLAY' }}
@@ -11,18 +11,28 @@
         <div v-if="!winner" class="gameplay-content">
           <div class="player-info">
             <h2 class="turn-label">TURN:</h2>
-            <div v-if="currentTurn==='player'">
-              <img :src="monsterImage" loading="lazy" :alt="playerName + ' monster avatar'" class="monster-avatar" />
-              <h2 class="player-name">{{ playerName }}</h2>
-              <Button @click="shoot" class="p-button-secondary">
-                Shoot
-              </Button>
+            <div v-if="currentTurn==='player'" class="player-turn-container">
+              <div class="avatar-wrapper">
+                <img :src="monsterImage" loading="lazy" :alt="playerName + ' monster avatar'" class="monster-avatar" />
+              <div v-if="timerActive" class="timer-overlay">
+              <div class="timer-overlay-content">
+                <i class="pi pi-clock" style="margin-right: 0.25rem;"></i>
+                {{ timerValue }}s
+              </div>
             </div>
-            <div v-if ="currentTurn==='robot'">
-              <img src="/src/assets/monsters/robot.png" loading="lazy" alt="Robot monster avatar" class="monster-avatar" />
-              <h2 class="player-name">Robot</h2>
-              <div class="monster-btn-placeholder"></div>
+            <h2 class="player-name">{{ playerName }}</h2>  
+            <Button @click="shoot" class="p-button-secondary" style="margin-right:0.5em; margin-top:0.5em;">
+              Shoot
+            </Button>
+            <Button icon="pi pi-clock" @click="timer" class="p-button-secondary"> </Button>
             </div>
+          </div>
+
+          <div v-if ="currentTurn==='robot'">
+            <img src="/src/assets/monsters/robot.png" loading="lazy" alt="Robot monster avatar" class="monster-avatar" />
+            <h2 class="player-name">Robot</h2>
+            <div class="monster-btn-placeholder"></div>
+          </div>
           </div>
           <Divider layout="vertical" />
           <div class="canvas-container">
@@ -53,7 +63,7 @@
           </div>
         </div>
         <div class="actions">
-          <Button  icon="pi pi-refresh" @click="restartGame" class="p-button-secondary" />
+          <Button  icon="pi pi-refresh" @click="restartGame" class="p-button-secondary" ></Button>
         </div>
       </template>
     </Card>
@@ -79,7 +89,9 @@ export default {
       currentTurn: 'player',
       playerShots: 2,
       winner:null,
-
+      timerActive: false,
+      timerValue: 20,
+      timerInterval: null,
     }
   },
   computed: {
@@ -146,6 +158,19 @@ export default {
       } catch (error) {
         console.error("Error shooting:", error);
       }
+    },
+    async timer() {
+      if (this.timerActive) return;
+      this.timerActive = true;
+      this.timerValue = 20;
+      this.timerInterval = setInterval(() => {
+        if (this.timerValue > 0) {
+          this.timerValue--;
+        } else {
+          this.timerActive = false;
+          clearInterval(this.timerInterval);
+        }
+      }, 1000);
     },
     async robotTurn() {
       try {
@@ -530,4 +555,26 @@ export default {
   align-items: center;
   justify-content: center;
 }
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.timer-overlay {
+  position: absolute;
+  top: 1.5rem;
+  right: 0.5rem;
+  background: #ffffffdd;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.timer-overlay-content {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #fc1a1a;
+  display: flex;
+  align-items: center;
+}
+
 </style>

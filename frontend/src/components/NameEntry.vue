@@ -1,19 +1,19 @@
 <template>
-<div class="justify-content-center align-items-center p-3" >
-    <Card class="shadow-5 border-round-lg  p-3">
+<div class="fixed top-0 left-0 w-screen h-screen flex justify-content-center items-center px-3 pt-6 overflow-hidden"  style="margin:0 !important;">
+    <Card class="shadow-5 border-round-lg  p-4 max-w-full overflow-hidden" style="max-height: 80vh; overflow-y: auto;">
         <template #header>
             <div class="flex justify-content-center">
                 <img 
                   alt="Cup Pong Logo" 
                   src="/src/assets/cupponglogo.jpg" 
-                  class="border-circle shadow-3" 
-                  style="width: 300px; height: 300px;"
+                  class="border-circle shadow-3 object-contain" 
+                  style="width: 100%; max-width:300px;  height: auto;"
                 />
             </div>
         </template>
 
         <template #title>
-            <div class="text-center text-4xl font-bold text-primary" style="font-family: 'Montserrat', sans-serif;">
+            <div class="text-center font-bold" style="font-family: 'Archivo Narrow', sans-serif; font-size:3rem; color:coral">
                 CUP PONG CHALLENGE
             </div>
         </template>
@@ -36,8 +36,8 @@
                     <div v-if="nameError" class="text-red-500 font-semibold">{{ nameError }}</div>
                 </div>
             </div>
-            <div class="flex justify-content-center gap-2 mt-3">
-                <Button label="Submit" @click="submitForm" class=" p-button-rounded shadow-2 px-5" />
+            <div class="flex justify-content-center gap-2 mt-2">
+                <Button label="Submit" @click="submitForm" class=" p-button-rounded shadow-2 px-2 " />
             </div>
         </template>
     </Card>
@@ -48,6 +48,13 @@
         max-height: 90vh;
         overflow-y: auto;
     }
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overscroll-behavior:none;
+    }
+
 </style>
 
 <script setup>
