@@ -7,10 +7,11 @@
         </div>
       </template>
 
-      <template #content>
+      <template v-slot:content>
         <div v-if="!winner" class="gameplay-content">
           <div class="player-info">
             <h2 class="turn-label">TURN:</h2>
+
             <div v-if="currentTurn==='player'" class="player-turn-container">
               <div class="avatar-wrapper">
                 <img :src="monsterImage" loading="lazy" :alt="playerName + ' monster avatar'" class="monster-avatar" />
@@ -21,10 +22,7 @@
               </div>
             </div>
             <h2 class="player-name">{{ playerName }}</h2>  
-            <Button @click="shoot" class="p-button-secondary" style="margin-right:0.5em; margin-top:0.5em;">
-              Shoot
-            </Button>
-            <Button icon="pi pi-clock" @click="timer" class="p-button-secondary"> </Button>
+            <Button icon="pi pi-caret-right" @click="timer" style="margin-top:1em; background-color:green;"></Button>
             </div>
           </div>
 
@@ -35,10 +33,41 @@
           </div>
           </div>
           <Divider layout="vertical" />
-          <div class="canvas-container">
-            <div ref="gameCanvas" class="game-canvas"></div>
-          </div>
+
+            <div v-if="gameMode === 'manual'">
+              
+              <div class="cups-grid">
+                <h3>robot</h3>
+                <div class="cup-row" v-for="(row, rowIndex) in 3" :key="'robot-row-' + rowIndex">
+                  <Cup
+                    v-for="i in 3 - rowIndex"
+                    :key="'robot-' + (robotCupStart + robotIndex(rowIndex, i))"
+                    :cupId="robotCupStart + robotIndex(rowIndex, i)"
+                    :visible="cupVisibility[robotCupStart + robotIndex(rowIndex, i)]"
+                    @cup-clicked="handleCupClick"
+                  />
+                </div>
+              </div>
+              <br/>
+              <div class="cups-grid">
+                <div class="cup-row" v-for="(row, rowIndex) in 3" :key="'player-row-' + rowIndex">
+                  <Cup
+                    v-for="i in rowIndex + 1"
+                    :key="'player-' + (playerCupStart + playerIndex(rowIndex, i))"
+                    :cupId="playerCupStart + playerIndex(rowIndex, i)"
+                    :visible="cupVisibility[playerCupStart + playerIndex(rowIndex, i)]"
+                    @cup-clicked="handleCupClick"
+                  />
+                </div>
+                <h3>player</h3>
+              </div>
+            </div>
+
+            <div v-else class="canvas-container">
+              <div ref="gameCanvas" class="game-canvas"></div>
+            </div>
         </div>
+
         <div v-else class="text-center">
           <div v-if="winner === 'player'">
             <img
@@ -62,8 +91,12 @@
             <p>Ha ha you lost.</p>
           </div>
         </div>
-        <div class="actions">
-          <Button  icon="pi pi-refresh" @click="restartGame" class="p-button-secondary" ></Button>
+        <div class="actions gap-2"  style="margin: 0.3em; padding: 1em !important;">
+          <Button  v-if="!winner" @click="manualMode" class = "p-button-secondary" style="background-color:coral !important;">Manual</Button>
+          <Button icon="pi pi-refresh" @click="restartGame" class="p-button-secondary" ></Button>
+          <!-- <Button @click="shoot" class="p-button-secondary" >
+              Shoot
+          </Button> -->
         </div>
       </template>
     </Card>
@@ -74,9 +107,16 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import api from '../api';
+import Cup from './Cup.vue'; 
+import axios from 'axios';
+
+
 
 export default {
   name: 'GamePlay',
+  components:{
+    Cup
+  },
   props: {
     playerName: { type: String, default: 'Player 1' },
     monsterID: { type: Number, required: true }
@@ -92,6 +132,10 @@ export default {
       timerActive: false,
       timerValue: 20,
       timerInterval: null,
+      gameMode: 'auto',
+      cupVisibility: Array(12).fill(true),
+      robotCupStart:0,
+      playerCupStart:6,
     }
   },
   computed: {
@@ -102,7 +146,9 @@ export default {
   mounted() {
     this.initThree();
     window.addEventListener('resize', this.handleResize);
-    this.startGame();
+    if (this.gameMode === 'auto') {
+      this.startGame();
+    }
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
@@ -162,15 +208,18 @@ export default {
     async timer() {
       if (this.timerActive) return;
       this.timerActive = true;
-      this.timerValue = 20;
+      this.timerValue = 5;
       this.timerInterval = setInterval(() => {
         if (this.timerValue > 0) {
           this.timerValue--;
         } else {
           this.timerActive = false;
           clearInterval(this.timerInterval);
+          this.currentTurn = 'robot';
+          this.robotTurn();
         }
       }, 1000);
+
     },
     async robotTurn() {
       try {
@@ -241,6 +290,27 @@ export default {
 
       requestAnimationFrame(animateFrame);
       });
+    },
+    async dropCup(cupId) {
+      try {
+        await api.post('/drop-cup', { cup: cupId });
+        console.log(`Dropped ${cupId}`);
+      } catch (err) {
+        console.error('Failed to drop cup:', err);
+      }
+    },
+    robotIndex(row, col) {
+      // row: 0 = 3 cups, 1 = 2 cups, 2 = 1 cup
+      return (row * 3) - (row * (row - 1)) / 2 + (col - 1);
+    },
+    playerIndex(row, col) {
+      // row: 0 = 1 cup, 1 = 2 cups, 2 = 3 cups
+      return (row * (row + 1)) / 2 + (col - 1);
+    },
+    handleCupClick(id) {
+      this.cupVisibility[id] = false;
+      this.dropCup(id); // Pi trigger
+      this.gameOver();
     },
 
     initThree() {
@@ -435,11 +505,30 @@ export default {
       window.location.reload();
       this.winner = null;
     },
+    manualMode() {
+      this.gameMode = 'manual';
+      this.timerActive = false;
+      clearInterval(this.timerInterval);
+      this.currentTurn = 'player';
+      this.winner = null;
+      console.log("Switched to manual mode");
+    },
     gameOver() {
-      if (this.cupMeshesPlayer.every(cup => !cup.visible)) {
+      if(this.gameMode === 'manual'){
+        const robotCupsGone = this.cupVisibility.slice(0, 6).every(v => !v);
+        const playerCupsGone = this.cupVisibility.slice(6).every(v => !v);
+        if (playerCupsGone) {
+          this.winner = 'robot';
+        } else if (robotCupsGone) {
+          this.winner = 'player';
+        }
+        
+      }else{
+        if (this.cupMeshesPlayer.every(cup => !cup.visible)) {
         this.winner = 'player';
-      } else if (this.cupMeshesRobot.every(cup => !cup.visible)) {
-        this.winner = 'robot';
+        } else if (this.cupMeshesRobot.every(cup => !cup.visible)) {
+          this.winner = 'robot';
+        }
       }
     }
   }
@@ -575,6 +664,17 @@ export default {
   color: #fc1a1a;
   display: flex;
   align-items: center;
+}
+.cups-grid {
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cup-row {
+  display: flex;
+  justify-content: center;
 }
 
 </style>

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from game_sim import CupPongSimulator
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -41,5 +42,11 @@ def robot_turn():
             hits.append(result)
     return {"hits": hits, "state": sim.get_game_state()}
 
+class CupDropRequest(BaseModel):
+    cup: int
 
+@app.post("/drop-cup")
+def drop_cup(req: CupDropRequest):
+    print(f"Dropping cup ID: {req.cup}")
+    return {"message": f"Cup {req.cup} drop signal received"}
     
