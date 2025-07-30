@@ -200,7 +200,7 @@ try:
             print(f"State {state_index + 1}: Moving and firing")
 
             # If we’re returning to State 1 (0°), home using IR sensor
-            global current_position
+            #global current_position
             if state_index == 0:
                 current_position = home_stepper()
             else:
