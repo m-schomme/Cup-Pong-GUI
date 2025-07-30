@@ -293,7 +293,7 @@ export default {
     },
     async dropCup(cupId) {
       try {
-        await api.post('/drop-cup', { cup: cupId });
+        await api.post('/drop-cup', { cup_id: cupId });
         console.log(`Dropped ${cupId}`);
       } catch (err) {
         console.error('Failed to drop cup:', err);
