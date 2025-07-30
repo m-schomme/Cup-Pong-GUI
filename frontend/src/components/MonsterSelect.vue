@@ -1,7 +1,7 @@
 <template>
   <div class="surface-100 min-h-screen p-0">
     <div class="flex justify-content-center" >
-      <Card class="shadow-5 border-round-lg w-full max-w-4xl mt-1 p-2 "style="max-height: 86.5vh;">
+      <Card class="shadow-5 border-round-lg w-full max-w-4xl mt-1 p-2 "style="height: 85.8vh; margin-top:0 !important;">
         <template #title>
           <div 
             class="monster-title-container" :class="{ 'monster-title--shrunk': selectedMonster }">
@@ -21,7 +21,7 @@
                       ? 'border-primary border-2 shadow-10 scale-120' 
                       : (selectedMonster ? 'monster-card--shrunk' : '')
                     ]"
-                    style="width: 14em; height: 16.5em;"
+                    style="width: 12em; height: 15.5em;"
                 >
                     <template #content>
                         <!-- <img :src="monster.src" :alt="monster.name" class=" justify-content-center w-10rem h-10rem border-round-lg mb-3 block" /> -->
@@ -101,7 +101,7 @@
       width: 100%;
       max-width: 14.5rem;
       min-width: 10rem;
-      height: 16.5rem;
+      height: 15.5rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -111,7 +111,7 @@
 
     .monster-image-container {
       width: 100%;
-      height: 13rem; /* or use clamp(7rem, 20vw, 12rem) for more flexibility */
+      height: 12.2rem; /* or use clamp(7rem, 20vw, 12rem) for more flexibility */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -136,13 +136,13 @@
       z-index: 0;
     }
     .scale-120 {
-      transform: scale(1.08);
+      transform: scale(1.05);
       z-index: 1;
       transition: transform 0.3s;
     }
     .monster-btn {
-      padding: 0.10rem 0.5rem !important; /* smaller padding */
-      font-size: 1rem !important;       /* smaller font */
+      padding: 0.10rem 0.5rem !important; 
+      font-size: 1.2rem !important;       
       min-width: unset !important;
       min-height: unset !important;
       margin-top: 0.5rem !important;

@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from game_sim import CupPongSimulator
 from pydantic import BaseModel
-# from adafruit_servokit import ServoKit
+from adafruit_servokit import ServoKit
 from time import sleep
 import os
-# import board
+import board
+import asyncio
+from Launcher import move_to_state
 
 
 app = FastAPI()
@@ -22,33 +23,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-sim = CupPongSimulator()
-# Health check route
 @app.get("/")
 def read_root():
     return {"status": "Backend Running"}
 
-# Example game start route
-@app.post("/start-game")
-def start_game():
-    sim.__init__()  
-    return {"message": "Game started!", "state": sim.get_game_state()}
 
-@app.post("/shoot")
-def shoot():
-    result = sim.simulate_player_shot()
-    if result is None:
-        return {"message": "Game over!", "state": sim.get_game_state()}
-    return {"hit": result, "state": sim.get_game_state()}
 
 @app.post("/robot-turn")
-def robot_turn():
-    hits = []
-    for _ in range(2):
-        result = sim.simulate_robot_shot()
-        if result is not None:
-            hits.append(result)
-    return {"hits": hits, "state": sim.get_game_state()}
+async def robot_turn():
+    print("Robot turn started")
+    move_to_state()
+    await asyncio.sleep(1)
+    print("Robot turn complete")
+    return {"message": "Robot's turn completed"}
 
 
 @app.post("/drop-cup")
@@ -71,28 +58,35 @@ async def drop_cup(request: CupRequest):
     return {"message": f"cup {cup_id} dropped"}
    
    
+@app.post("/reset-cups")
+async def reset_cups():
+    print("Resetting all cups")
+    kit = ServoKit(channels=16)
+    for cup_id in range(11):
+        kit.servo[servo_map[cup_id]].angle = 100
+        sleep(0.5)
+    await asyncio.sleep(0.02)
+    return {"message": "All cups reset"}
 
 def open_servo(servo_id):
-        # kit = ServoKit(channels=16)
+        kit = ServoKit(channels=16)
         print("Moving servo {servo_id}")
-        #kit.servo[servo_id].angle =0
-        #sleep(0.5)
+        kit.servo[servo_id].angle =0
+        sleep(0.5)
 
        
 
-
-
 servo_map = {
-    0: open_servo(1),
-    1: open_servo(2),
-    2: open_servo(3),
+    0: open_servo(2),
+    1: open_servo(1),
+    2: open_servo(0),
     3: open_servo(4),
-    4: open_servo(11),
-    5: open_servo(10),
-    6: open_servo(9),
-    7: open_servo(8),
-    8: open_servo(7),
-    9: open_servo(6),
-    10: open_servo(5),
-    11: open_servo(0)
+    4: open_servo(3),
+    5: open_servo(5),
+    6: open_servo(6),
+    7: open_servo(7),
+    8: open_servo(8),
+    9: open_servo(9),
+    10: open_servo(10),
+    11: open_servo(11)
 }

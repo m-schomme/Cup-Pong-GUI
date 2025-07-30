@@ -1,6 +1,6 @@
 <template>
 <div class="fixed top-0 left-0 w-screen h-screen flex justify-content-center items-center px-3 pt-6 overflow-hidden"  style="margin:0 !important;">
-    <Card class="shadow-5 border-round-lg  p-4 max-w-full overflow-hidden" style="max-height: 80vh; overflow-y: auto;">
+    <Card class="shadow-5 border-round-lg  p-4 max-w-full overflow-hidden" style="max-height: 82vh; overflow-y: auto;">
         <template #header>
             <div class="flex justify-content-center">
                 <img 

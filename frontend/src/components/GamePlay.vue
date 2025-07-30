@@ -1,6 +1,6 @@
 <template>
   <div class="gameplay-container">
-    <Card class="gameplay-card" style="max-height: 86vh;">
+    <Card class="gameplay-card" style="max-height: 85.8vh; width: 88vw;">
       <template #title>
         <div class="gameplay-title">
           {{ winner ? 'WINNER' : 'GAME PLAY' }}
@@ -32,12 +32,12 @@
             <div class="monster-btn-placeholder"></div>
           </div>
           </div>
-          <Divider layout="vertical" />
+          
 
-            <div v-if="gameMode === 'manual'">
+            <div >
               
               <div class="cups-grid">
-                <h3>robot</h3>
+                <p style="font-size: 2.5rem; padding:0rem; margin:0">&#x1F916;</p>
                 <div class="cup-row" v-for="(row, rowIndex) in 3" :key="'robot-row-' + rowIndex">
                   <Cup
                     v-for="i in 3 - rowIndex"
@@ -49,6 +49,7 @@
                 </div>
               </div>
               <br/>
+              <br/>
               <div class="cups-grid">
                 <div class="cup-row" v-for="(row, rowIndex) in 3" :key="'player-row-' + rowIndex">
                   <Cup
@@ -59,13 +60,11 @@
                     @cup-clicked="handleCupClick"
                   />
                 </div>
-                <h3>player</h3>
+                <p style="font-size: 2.5rem; padding:0rem; margin:0">&#x1F47E;</p>
               </div>
             </div>
 
-            <div v-else class="canvas-container">
-              <div ref="gameCanvas" class="game-canvas"></div>
-            </div>
+            
         </div>
 
         <div v-else class="text-center">
@@ -91,12 +90,8 @@
             <p>Ha ha you lost.</p>
           </div>
         </div>
-        <div class="actions gap-2"  style="margin: 0.3em; padding: 1em !important;">
-          <Button  v-if="!winner" @click="manualMode" class = "p-button-secondary" style="background-color:coral !important;">Manual</Button>
+        <div class="actions gap-2"  style="margin: 0.3em; padding: 1em !important; position:relative; top: -2rem; left: 1rem;">
           <Button icon="pi pi-refresh" @click="restartGame" class="p-button-secondary" ></Button>
-          <!-- <Button @click="shoot" class="p-button-secondary" >
-              Shoot
-          </Button> -->
         </div>
       </template>
     </Card>
@@ -104,12 +99,9 @@
 </template>
 
 <script>
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import api from '../api';
 import Cup from './Cup.vue'; 
 import axios from 'axios';
-
 
 
 export default {
@@ -130,9 +122,8 @@ export default {
       playerShots: 2,
       winner:null,
       timerActive: false,
-      timerValue: 20,
+      timerValue: 10,
       timerInterval: null,
-      gameMode: 'auto',
       cupVisibility: Array(12).fill(true),
       robotCupStart:0,
       playerCupStart:6,
@@ -144,11 +135,9 @@ export default {
     }
   },
   mounted() {
-    this.initThree();
+    
     window.addEventListener('resize', this.handleResize);
-    if (this.gameMode === 'auto') {
-      this.startGame();
-    }
+    this.startGame();
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
@@ -159,6 +148,9 @@ export default {
   methods: {
     async startGame() {
       try {
+        this.currentTurn = 'player';
+        console.log(this.currentTurn);
+        this.winner = null;
         const response = await api.post('/start-game');
         console.log(response.data);
         this.cupState = response.data.state;
@@ -168,47 +160,11 @@ export default {
       }
     },
 
-    async shoot() {
-      try {
-        const response = await api.post('/shoot');
-        console.log(response.data);
-        this.cupState = response.data.state;
-
-        if (response.data.hit !==null) {
-          const targetCup = this.cupMeshesPlayer[response.data.hit];
-          const targetX = targetCup.position.x;
-          const targetZ = targetCup.position.z;
-          this.animateShot(targetX, targetZ);
-
-
-        setTimeout(() => {
-          this.updateCups();
-        }, 750);
-
-        setTimeout(() => {
-          this.playerShots -=1;
-          if (this.playerShots >0){
-          } else {
-            this.currentTurn = 'robot';
-            this.robotTurn();
-          }
-        }, 1700);
-
-        } else{
-          this.updateCups();
-          setTimeout(() => {
-            this.currentTurn = 'robot';
-            this.robotTurn();
-          }, 1000);
-        }
-      } catch (error) {
-        console.error("Error shooting:", error);
-      }
-    },
     async timer() {
-      if (this.timerActive) return;
+      console.log('Timer button clicked');
+      clearInterval(this.timerInterval);
       this.timerActive = true;
-      this.timerValue = 5;
+      this.timerValue = 10;
       this.timerInterval = setInterval(() => {
         if (this.timerValue > 0) {
           this.timerValue--;
@@ -223,73 +179,12 @@ export default {
     },
     async robotTurn() {
       try {
-        const response = await api.post('/robot-turn');
-        console.log(response.data);
-        const hits = response.data.hits;
-
-        // Animate each robot shot sequentially
-        for (let i = 0; i < hits.length; i++) {
-          const hitIndex = hits[i];
-          const targetCup = this.cupMeshesRobot[hitIndex];
-          const targetX = targetCup.position.x;
-          const targetZ = targetCup.position.z;
-
-          await new Promise(resolve => setTimeout(resolve, 400));
-          await this.animateRobotShot(targetX, targetZ);
-
-          // Hide the cup immediately after the shot
-          this.cupMeshesRobot[hitIndex].visible = false;
-          // Optionally update cupState if needed
-          // this.cupState[hitIndex + this.cupMeshesPlayer.length] = false;
-        }
-
-        // Update full state after robot finishes
-        this.cupState = response.data.state;
-        this.updateCups();
-
-        setTimeout(() => {
-          this.playerShots = 2;  // Reset player shots for next round
-          this.currentTurn = 'player';
-        }, 700);
+        await api.post('/robot-turn');
+        this.currentTurn = 'player';
+        console.log("Player's turn again");
       } catch (error) {
         console.error("Error in robot turn:", error);
       }
-    },
-    animateRobotShot(targetX, targetZ) {
-      return new Promise((resolve) => {
-        const startX = 0;
-        const startY = 0.3;
-        const startZ = -10;
-
-        const endX = targetX;
-        const endY = 0.14;
-        const endZ = targetZ;
-
-        const duration = 600; // ms
-        const startTime = performance.now();
-
-        const animateFrame = (now) => {
-          const elapsed = now - startTime;
-          const t = Math.min(elapsed / duration, 1);
-
-          // Simple parabolic arc
-          this.ball.position.x = startX + (endX - startX) * t;
-          this.ball.position.z = startZ + (endZ - startZ) * t;
-          this.ball.position.y = startY + 12 * t * (1 - t);
-
-          if (t < 1) {
-            requestAnimationFrame(animateFrame);
-          } else {
-            this.ball.position.set(endX, endY, endZ);
-            setTimeout(() => {
-              this.resetBall();
-              resolve();  // Resolve after ball resets
-            }, 400);
-          }
-        };
-
-      requestAnimationFrame(animateFrame);
-      });
     },
     async dropCup(cupId) {
       try {
@@ -312,176 +207,6 @@ export default {
       this.dropCup(id); // Pi trigger
       this.gameOver();
     },
-
-    initThree() {
-      const width = this.$refs.gameCanvas.clientWidth;
-      const height = this.$refs.gameCanvas.clientHeight;
-
-      this.scene = new THREE.Scene();
-      this.scene.background = new THREE.Color(0xf5f5f5);
-
-      this.camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 100);
-      this.camera.position.set(0, 10, 15);
-
-      this.renderer = new THREE.WebGLRenderer({ antialias: true });
-      this.renderer.setSize(width, height);
-      this.$refs.gameCanvas.appendChild(this.renderer.domElement);
-
-      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-      this.controls.update();
-
-      // Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-      this.scene.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(10, 10, 10);
-      this.scene.add(directionalLight);
-
-      // Table
-      const tableGeometry = new THREE.BoxGeometry(10, 0.5, 20);
-      const tableMaterial = new THREE.MeshPhongMaterial({ color: 0xf5f5f5 });
-      const table = new THREE.Mesh(tableGeometry, tableMaterial);
-      table.position.y = -0.25;
-      this.scene.add(table);
-
-      // Center line
-      const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const centerLine = new THREE.Mesh(
-        new THREE.BoxGeometry(0.05, 0.01, 20),
-        lineMaterial
-      );
-      centerLine.position.y = 0.135;
-      centerLine.position.x = 0;
-      centerLine.position.z = 0;
-      this.scene.add(centerLine);
-
-      // Side lines
-      const sideLineLeft = new THREE.Mesh(
-        new THREE.BoxGeometry(10, 0.01, 0.05),
-        lineMaterial
-      );
-      sideLineLeft.position.y = 0.135;
-      sideLineLeft.position.x = 0;
-      sideLineLeft.position.z = -10;
-      this.scene.add(sideLineLeft);
-
-      const sideLineRight = sideLineLeft.clone();
-      sideLineRight.position.z = 10;
-      this.scene.add(sideLineRight);
-
-      // Cups using LatheGeometry
-      const points = [
-        new THREE.Vector2(0.45, 0),
-        new THREE.Vector2(0.6, 0),
-        new THREE.Vector2(0.8, 1.7),
-        new THREE.Vector2(0.6, 1.65),
-        new THREE.Vector2(0.6, 0)
-      ];
-
-      const cupGeometry = new THREE.LatheGeometry(points, 64);
-      const cupMaterial = new THREE.MeshPhongMaterial({ color: 0xff2c2c, side: THREE.DoubleSide });
-      const cup2Material = new THREE.MeshPhongMaterial({ color: 0xfa8072, side: THREE.DoubleSide });
-
-      // First set of cups
-      const rows = 3;
-      for (let row = 0; row < rows; row++) {
-        const cupsInRow = rows - row;
-        for (let i = 0; i < cupsInRow; i++) {
-          const cup = new THREE.Mesh(cupGeometry, cupMaterial);
-          cup.position.x = (i - (cupsInRow - 1) / 2) * 2;
-          cup.position.y = 0.14;
-          cup.position.z = -8 + row * 2;
-          this.scene.add(cup);
-          this.cupMeshesPlayer.push(cup);
-
-          // Add bottom disk
-          const bottomGeometry = new THREE.CircleGeometry(0.45, 32);
-          const bottomMaterial = cupMaterial.clone();
-          const bottom = new THREE.Mesh(bottomGeometry, bottomMaterial);
-          bottom.rotation.x = -Math.PI / 2;
-          bottom.position.set(cup.position.x, cup.position.y, cup.position.z);
-          this.scene.add(bottom);
-        }
-      }
-
-      // Second set of cups
-      for (let row = 0; row < rows; row++) {
-        for (let i = 0; i <= row; i++) {
-          const cup = new THREE.Mesh(cupGeometry, cup2Material);
-          cup.position.x = (i - row / 2) * 2;
-          cup.position.y = 0.14;
-          cup.position.z = 5 + row * 2;
-          this.scene.add(cup);
-
-          // Add bottom disk
-          const bottomGeometry = new THREE.CircleGeometry(0.45, 32);
-          const bottomMaterial = cup2Material.clone();
-          const bottom = new THREE.Mesh(bottomGeometry, bottomMaterial);
-          bottom.rotation.x = -Math.PI / 2;
-          bottom.position.set(cup.position.x, cup.position.y, cup.position.z);
-          this.scene.add(bottom);
-          this.cupMeshesRobot.push(cup);
-        }
-      }
-
-      // Ball
-      const ballGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-      const ballMaterial = new THREE.MeshPhongMaterial({ color: 0xFAF9F6 });
-      this.ball = new THREE.Mesh(ballGeometry, ballMaterial);
-      this.ball.position.set(0, 0, 11);
-      this.scene.add(this.ball);
-
-
-      this.animate();
-    },
-    animate() {
-      this.renderer.render(this.scene, this.camera);
-      requestAnimationFrame(this.animate);
-    },
-    animateShot(targetX, targetZ) {
-      const startX = 0;
-      const startY = 0.3;
-      const startZ = 0;
-
-      const endX = targetX;
-      const endY = 0.14; // Cup height
-      const endZ = targetZ;
-
-      const duration = 500; // ms
-      const startTime = performance.now();
-
-      const animateFrame = (now) => {
-        const elapsed = now - startTime;
-        const t = Math.min(elapsed / duration, 1); // Normalize 0 → 1
-
-        // Simple parabolic arc (you can tweak this for realism)
-        this.ball.position.x = startX + (endX - startX) * t;
-        this.ball.position.z = startZ + (endZ - startZ) * t;
-        this.ball.position.y = startY + 12 * t * (1 - t); // increased arc peak
-
-        if (t < 1) {
-          requestAnimationFrame(animateFrame);
-        } else {
-          this.ball.position.set(endX, endY, endZ);
-          setTimeout(() => {
-            this.resetBall();
-          }, 100);
-        }
-      };
-
-      requestAnimationFrame(animateFrame);
-    },
-    resetBall() {
-      this.ball.position.set(0, 0, 11);
-    },
-    handleResize() {
-      if (!this.$refs.gameCanvas) return;
-      const width = this.$refs.gameCanvas.clientWidth;
-      const height = this.$refs.gameCanvas.clientHeight;
-      this.camera.aspect = width / height;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(width, height);
-    },
     updateCups() {
       for (let i = 0; i < this.cupMeshesPlayer.length; i++) {
         if (this.cupState[i] === false) {
@@ -501,36 +226,25 @@ export default {
 
       this.gameOver();
     },
-    restartGame() {
+    async restartGame() {
+      try {
+        await api.post('/reset-cups');
+        console.log('cups reset');
+      } catch (err) {
+        console.error('failed to reset cups');
+      }
       window.location.reload();
       this.winner = null;
     },
-    manualMode() {
-      this.gameMode = 'manual';
-      this.timerActive = false;
-      clearInterval(this.timerInterval);
-      this.currentTurn = 'player';
-      this.winner = null;
-      console.log("Switched to manual mode");
-    },
     gameOver() {
-      if(this.gameMode === 'manual'){
-        const robotCupsGone = this.cupVisibility.slice(0, 6).every(v => !v);
-        const playerCupsGone = this.cupVisibility.slice(6).every(v => !v);
-        if (playerCupsGone) {
-          this.winner = 'robot';
-        } else if (robotCupsGone) {
-          this.winner = 'player';
-        }
-        
-      }else{
-        if (this.cupMeshesPlayer.every(cup => !cup.visible)) {
+      const robotCupsGone = this.cupVisibility.slice(0, 6).every(v => !v);
+      const playerCupsGone = this.cupVisibility.slice(6).every(v => !v);
+      if (playerCupsGone) {
+        this.winner = 'robot';
+      } else if(robotCupsGone) {
         this.winner = 'player';
-        } else if (this.cupMeshesRobot.every(cup => !cup.visible)) {
-          this.winner = 'robot';
-        }
       }
-    }
+  }
   }
 };
 </script>
@@ -566,8 +280,8 @@ export default {
   display: flex;
   flex-direction: row;
   gap: 2rem;
-  align-items: stretch;
-  justify-content: center;
+  align-items: flex-start;      /* Top align */
+  justify-content: space-between; /* Push to ends */
   flex-wrap: wrap;
 }
 .player-info {
@@ -666,15 +380,17 @@ export default {
   align-items: center;
 }
 .cups-grid {
-  width: 60%;
+  width: 80%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-right: 2rem;
 }
 
 .cup-row {
   display: flex;
   justify-content: center;
+  gap: 1.5rem;
 }
 
 </style>
