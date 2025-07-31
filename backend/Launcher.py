@@ -191,33 +191,34 @@ def move_to_state(state):
     GPIO.output(ST_STBY, GPIO.LOW)   # Disable after movement (no holding torque)
 
 # --- Main Loop (Button-Controlled State Cycling) ---
-try:
-    print("Press button to cycle through states (1 → 2 → 3 → back to 1, with homing).")
-    while True:
-        if GPIO.input(BUTTON_PIN) == GPIO.LOW:  # If button is pressed
-            # Increment state index and loop back to 0 after 2
-            state_index = (state_index + 1) % len(states)
-            print(f"State {state_index + 1}: Moving and firing")
+if __name__ == "__main__":
+    try:
+        print("Press button to cycle through states (1 → 2 → 3 → back to 1, with homing).")
+        while True:
+            if GPIO.input(BUTTON_PIN) == GPIO.LOW:  # If button is pressed
+                # Increment state index and loop back to 0 after 2
+                state_index = (state_index + 1) % len(states)
+                print(f"State {state_index + 1}: Moving and firing")
 
-            # If we’re returning to State 1 (0°), home using IR sensor
-            #global current_position
-            if state_index == 0:
-                current_position = home_stepper()
-            else:
-                move_to_state(state_index)
+                # If we’re returning to State 1 (0°), home using IR sensor
+                #global current_position
+                if state_index == 0:
+                    current_position = home_stepper()
+                else:
+                    move_to_state(state_index)
 
-            # Spin up flywheels and fire one ball
-            spin_and_fire(*states[state_index])
+                # Spin up flywheels and fire one ball
+                spin_and_fire(*states[state_index])
 
-            time.sleep(0.3)  # Debounce to avoid multiple triggers
-        time.sleep(0.01)     # Small loop delay to reduce CPU usage
+                time.sleep(0.3)  # Debounce to avoid multiple triggers
+            time.sleep(0.01)     # Small loop delay to reduce CPU usage
 
-except KeyboardInterrupt:
-    print("\nShutting down...")
+    except KeyboardInterrupt:
+        print("\nShutting down...")
 
-finally:
-    # Cleanup all resources safely on exit
-    pwmA.stop()
-    pwmB.stop()
-    disable_flywheels()
-    GPIO.cleanup()
+    finally:
+        # Cleanup all resources safely on exit
+        pwmA.stop()
+        pwmB.stop()
+        disable_flywheels()
+        GPIO.cleanup()

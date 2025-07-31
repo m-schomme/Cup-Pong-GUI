@@ -32,7 +32,7 @@ def read_root():
 @app.post("/robot-turn")
 async def robot_turn():
     print("Robot turn started")
-    move_to_state()
+    move_to_state(0)
     await asyncio.sleep(1)
     print("Robot turn complete")
     return {"message": "Robot's turn completed"}
@@ -77,16 +77,16 @@ def open_servo(servo_id):
        
 
 servo_map = {
-    0: open_servo(2),
-    1: open_servo(1),
-    2: open_servo(0),
-    3: open_servo(4),
-    4: open_servo(3),
-    5: open_servo(5),
-    6: open_servo(6),
-    7: open_servo(7),
-    8: open_servo(8),
-    9: open_servo(9),
-    10: open_servo(10),
-    11: open_servo(11)
+    0: lambda: open_servo(2),
+    1: lambda: open_servo(1),
+    2: lambda: open_servo(0),
+    3: lambda: open_servo(4),
+    4: lambda: open_servo(3),
+    5: lambda: open_servo(5),
+    6: lambda: open_servo(6),
+    7: lambda: open_servo(7),
+    8: lambda: open_servo(8),
+    9: lambda: open_servo(9),
+    10: lambda: open_servo(10),
+    11: lambda: open_servo(11),
 }
