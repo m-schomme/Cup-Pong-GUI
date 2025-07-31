@@ -220,9 +220,6 @@ def fire_away():
     print(f"Robot shot attempted at state {state_index + 1} with speeds {states[state_index]}%")
 
     time.sleep(0.3)  # Debounce to avoid multiple triggers
-    pwmA.stop()
-    pwmB.stop()
-    disable_flywheels()
 
     # except KeyboardInterrupt:
     #     print("\nShutting down...")

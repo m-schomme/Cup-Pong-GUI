@@ -63,14 +63,14 @@ async def reset_cups():
     for servo_id in sorted(servo_map.values()):
         print(f"Resetting servo {servo_id}")
         kit.servo[servo_id].angle = 100
-        sleep(0.5)
+        sleep(2)
     await asyncio.sleep(0.02)
     return {"message": "All cups reset"}
 
 def open_servo(servo_id):
         print(f"Moving servo {servo_id}")
         kit.servo[servo_id].angle =0
-        sleep(0.5)
+        sleep()
 
        
 
@@ -84,7 +84,7 @@ servo_map = {
     6: 6,
     7: 7,
     8: 8,
-    9: 9,
+    9: 11,
     10: 10,
-    11: 11,
+    11: 9,
 }
