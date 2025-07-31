@@ -8,7 +8,7 @@ import board
 import asyncio
 from Launcher import move_to_state
 
-
+kit = ServoKit(channels=16)
 app = FastAPI()
 
 class CupRequest(BaseModel):
@@ -61,7 +61,6 @@ async def drop_cup(request: CupRequest):
 @app.post("/reset-cups")
 async def reset_cups():
     print("Resetting all cups")
-    kit = ServoKit(channels=16)
     for cup_id in range(11):
         kit.servo[servo_map[cup_id]].angle = 100
         sleep(0.5)
@@ -69,8 +68,7 @@ async def reset_cups():
     return {"message": "All cups reset"}
 
 def open_servo(servo_id):
-        kit = ServoKit(channels=16)
-        print("Moving servo {servo_id}")
+        print(f"Moving servo {servo_id}")
         kit.servo[servo_id].angle =0
         sleep(0.5)
 
