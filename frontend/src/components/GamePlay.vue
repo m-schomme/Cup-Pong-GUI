@@ -11,7 +11,6 @@
         <div v-if="!winner" class="gameplay-content">
           <div class="player-info">
             <h2 class="turn-label">TURN:</h2>
-
             <div v-if="currentTurn==='player'" class="player-turn-container">
               <div class="avatar-wrapper">
                 <img :src="monsterImage" loading="lazy" :alt="playerName + ' monster avatar'" class="monster-avatar" />
@@ -22,8 +21,9 @@
               </div>
             </div>
             <h2 class="player-name">{{ playerName }}</h2>  
-            <Button icon="pi pi-caret-right" @click="timer" style="margin-top:1em; background-color:green;"></Button>
+            <!-- <Button icon="pi pi-caret-right" @click="timer" style="margin-top:1em; background-color:green;"></Button> -->
             </div>
+            <Button icon="pi pi-caret-right" @click="timer" style="margin:1em; background-color:green;"></Button>
           </div>
 
           <div v-if ="currentTurn==='robot'">
@@ -166,7 +166,7 @@ export default {
       console.log('Timer button clicked');
       clearInterval(this.timerInterval);
       this.timerActive = true;
-      this.timerValue = 3;
+      this.timerValue = 10;
       this.timerInterval = setInterval(() => {
         if (this.timerValue > 0) {
           this.timerValue--;
@@ -180,6 +180,7 @@ export default {
 
     },
     async robotTurn() {
+      console.log("RobotTurn")
       try {
         await api.post('/robot-turn');
         this.currentTurn = 'player';
@@ -229,14 +230,15 @@ export default {
       this.gameOver();
     },
     async restartGame() {
-      window.location.reload();
-      this.winner = null;
+      
       try {
         await api.post('/reset-cups');
         console.log('cups reset');
       } catch (err) {
         console.error('failed to reset cups');
       }
+      window.location.reload();
+      this.winner = null;
     },
     gameOver() {
       const robotCupsGone = this.cupVisibility.slice(0, 6).every(v => !v);
