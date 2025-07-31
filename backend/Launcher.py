@@ -182,7 +182,7 @@ def move_to_state(state):
     Moves the stepper motor to the target position for the given state
     (relative to current position).
     """
-    # global current_position
+    global current_position
     target_position = steps_per_state[state]
     move_steps = target_position - current_position
     current_position = target_position
