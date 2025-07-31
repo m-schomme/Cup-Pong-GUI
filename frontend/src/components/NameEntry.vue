@@ -63,7 +63,6 @@ import Card from 'primevue/card';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { defineEmits } from 'vue';
-// import cupPongLogo from '@/assets/cupponglogo.jpg';
 
 const emit = defineEmits(['nameSubmitted']);
 const playerName = ref('');
@@ -76,7 +75,6 @@ function submitForm() {
     nameError.value = '';
     console.log("Submitted:", playerName.value);
     emit('nameSubmitted', playerName.value);
-    // Move forward to next game screen here
   }
 }
 </script>

@@ -6,7 +6,7 @@ from time import sleep
 import os
 import board
 import asyncio
-from Launcher import move_to_state
+from Launcher import fire_away
 
 kit = ServoKit(channels=16)
 app = FastAPI()
@@ -32,7 +32,7 @@ def read_root():
 @app.post("/robot-turn")
 async def robot_turn():
     print("Robot turn started")
-    move_to_state(0)
+    fire_away()
     await asyncio.sleep(1)
     print("Robot turn complete")
     return {"message": "Robot's turn completed"}

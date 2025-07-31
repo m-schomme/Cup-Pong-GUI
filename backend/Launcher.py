@@ -63,6 +63,7 @@ states = [
     (17.75, 17.75),   # State 2 speed
     (18.0, 18.0),   # State 3 speed
 ]
+global state_index
 state_index = 0      # Start at State 1
 
 # --- Stepper Setup ---
@@ -182,6 +183,7 @@ def move_to_state(state):
     Moves the stepper motor to the target position for the given state
     (relative to current position).
     """
+    print(f"stateindex : {state_index}")
     global current_position
     target_position = steps_per_state[state]
     move_steps = target_position - current_position
@@ -192,7 +194,9 @@ def move_to_state(state):
     print(f"Moved to state {state + 1} at {target_position}°.")
 
 # --- Main Loop (Button-Controlled State Cycling) ---
-if __name__ == "__main__":
+def fire_away():
+    global state_index
+    global current_position
     try:
         print("Press button to cycle through states (1 → 2 → 3 → back to 1, with homing).")
         while True:

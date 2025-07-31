@@ -74,6 +74,7 @@
               loading="lazy"
               :alt="playerName + ' monster avatar'"
               class="monster-avatar winner-avatar"
+              style="justify-self:center !important;"
             />
             <h3 class="winner-name">{{ playerName }}</h3>
             <p>Congratulations!</p>
@@ -85,6 +86,7 @@
               loading="lazy"
               alt="Robot avatar"
               class="monster-avatar"
+              style="justify-self:center !important;"
             />
             <h3 class="winner-name">Robot</h3>
             <p>Ha ha you lost.</p>
@@ -151,9 +153,9 @@ export default {
         this.currentTurn = 'player';
         console.log(this.currentTurn);
         this.winner = null;
-        const response = await api.post('/start-game');
-        console.log(response.data);
-        this.cupState = response.data.state;
+        //const response = await api.post('/start-game');
+        //console.log(response.data);
+        //this.cupState = response.data.state;
         this.updateCups();
       } catch (error) {
         console.error("Error starting game:", error);
@@ -164,7 +166,7 @@ export default {
       console.log('Timer button clicked');
       clearInterval(this.timerInterval);
       this.timerActive = true;
-      this.timerValue = 10;
+      this.timerValue = 3;
       this.timerInterval = setInterval(() => {
         if (this.timerValue > 0) {
           this.timerValue--;
@@ -227,14 +229,14 @@ export default {
       this.gameOver();
     },
     async restartGame() {
+      window.location.reload();
+      this.winner = null;
       try {
         await api.post('/reset-cups');
         console.log('cups reset');
       } catch (err) {
         console.error('failed to reset cups');
       }
-      window.location.reload();
-      this.winner = null;
     },
     gameOver() {
       const robotCupsGone = this.cupVisibility.slice(0, 6).every(v => !v);
