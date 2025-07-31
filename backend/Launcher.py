@@ -189,6 +189,7 @@ def move_to_state(state):
     GPIO.output(ST_STBY, GPIO.HIGH)  # Enable stepper driver
     step_motor(move_steps)
     GPIO.output(ST_STBY, GPIO.LOW)   # Disable after movement (no holding torque)
+    print(f"Moved to state {state + 1} at {target_position}°.")
 
 # --- Main Loop (Button-Controlled State Cycling) ---
 if __name__ == "__main__":
