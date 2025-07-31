@@ -44,7 +44,7 @@ async def drop_cup(request: CupRequest):
     print(f"Dropping cup ID: {cup_id}")
 
     servo_id = servo_map.get(cup_id)
-    if servo_fn is None:
+    if servo_id is None:
         print(f"No servo function defined for cup {cup_id}")
     try:
         open_servo(servo_id)
