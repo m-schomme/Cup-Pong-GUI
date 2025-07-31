@@ -42,18 +42,17 @@ async def robot_turn():
 async def drop_cup(request: CupRequest):
     cup_id = request.cup_id
     print(f"Dropping cup ID: {cup_id}")
-    servo_fn = servo_map.get(cup_id)
+
+    servo_id = servo_map.get(cup_id)
     if servo_fn is None:
         print(f"No servo function defined for cup {cup_id}")
     try:
-        servo_fn()
+        open_servo(servo_id)
     except Exception as e:
         print(f" srevo function falled: {e}")
    
     if cup_id not in servo_map:
         raise HTTPException(status_code=400, detail="Invalid cup ID")
-    print("calling servo function")
-    servo_map[cup_id]()
    
     return {"message": f"cup {cup_id} dropped"}
    
@@ -61,8 +60,9 @@ async def drop_cup(request: CupRequest):
 @app.post("/reset-cups")
 async def reset_cups():
     print("Resetting all cups")
-    for cup_id in range(11):
-        kit.servo[servo_map[cup_id]].angle = 100
+    for servo_id in sorted(servo_map.values()):
+        print(f"Resetting servo {servo_id}")
+        kit.servo[servo_id].angle = 100
         sleep(0.5)
     await asyncio.sleep(0.02)
     return {"message": "All cups reset"}
@@ -75,16 +75,16 @@ def open_servo(servo_id):
        
 
 servo_map = {
-    0: lambda: open_servo(2),
-    1: lambda: open_servo(1),
-    2: lambda: open_servo(0),
-    3: lambda: open_servo(4),
-    4: lambda: open_servo(3),
-    5: lambda: open_servo(5),
-    6: lambda: open_servo(6),
-    7: lambda: open_servo(7),
-    8: lambda: open_servo(8),
-    9: lambda: open_servo(9),
-    10: lambda: open_servo(10),
-    11: lambda: open_servo(11),
+    0: 2,
+    1: 1,
+    2: 0,
+    3: 4,
+    4: 3,
+    5: 5,
+    6: 6,
+    7: 7,
+    8: 8,
+    9: 9,
+    10: 10,
+    11: 11,
 }
